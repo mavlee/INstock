@@ -15,6 +15,8 @@ import org.scribe.model.Verb
 import com.google.gson.Gson
 import json.Profile
 import json.Connections
+import json.Company
+import json.Companies
 
 object Application extends Controller {
 

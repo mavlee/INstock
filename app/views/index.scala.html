@@ -8,19 +8,10 @@
    <h2>@profile.headline | @profile.industry</h2>
    <p>
     @profile.summary
-   </p>
-  }
-  <h2>Connections</h2>
-  @if(connections != null && connections.values != null) {
-  <ul>
-  @for(con <- connections.values){
-    <li>
-      <h3>@con.firstName @con.lastName</h3>
-      @con.headline
-      @con.industry
-    </li>
+    </p>
+    @for(company <- profile.companies.values){
+    <h3>@company.name @company.ticker</h3>
     }
-  </ul>
   }
 
 }
