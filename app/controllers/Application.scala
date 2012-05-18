@@ -17,7 +17,7 @@ import json.Profile
 import json.Connections
 
 object Application extends Controller {
-  
+
   //get the auth token out and get data otherwise redirect them
   def index = Action { implicit request =>
     val accToken = session.get("acc_token")
@@ -40,10 +40,10 @@ object Application extends Controller {
       case _ =>{
         Logger.info("Redirecting to auth page")
         Redirect(routes.Application.auth())
-      } 
+      }
     }
   }
-  
+
   //the auth action step
   def auth = Action {
     val serv = getOauthService
@@ -55,7 +55,7 @@ object Application extends Controller {
         "req_secret" -> reqT.getSecret()
     )
   }
-  
+
   //the callback route for oauth
   def callback(oauth_token: String, oauth_verifier: String) = Action { implicit request =>
     val reqToken = session.get("req_token")
@@ -75,10 +75,10 @@ object Application extends Controller {
       case _ => {
         Logger.error("Tokens didn't match")
         Redirect(routes.Application.auth())
-      } 
+      }
     }
   }
-  
+
   //the following functions should be in some helper class
   def getOauthService:OAuthService = {
     //could extract this to be checked on startup
@@ -102,7 +102,7 @@ object Application extends Controller {
         .callback(callback)
     sb.build
   }
-  
+
   def getProfileData(oauthService:OAuthService,accessToken:Token):Response = {
     val fields = "(id,first-name,last-name,summary,industry,headline,picture-url,positions:(company:(ticker),start-date,end-date))"
     val requestURL = "http://api.linkedin.com/v1/people/~:"+fields+"?format=json"
@@ -111,7 +111,7 @@ object Application extends Controller {
     oauthService.signRequest(accessToken, req);
     req.send();
   }
-  
+
   def getConnectionData(oauthService:OAuthService,accessToken:Token):Response = {
     val fields = "(id,first-name,last-name,summary,industry,headline,picture-url)"
     val requestURL = "http://api.linkedin.com/v1/people/~/connections:"+fields+"?format=json"

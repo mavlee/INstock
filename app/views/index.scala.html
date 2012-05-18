@@ -1,14 +1,14 @@
 @(profile: json.Profile, connections: json.Connections)
 
 @main("Your Profile") {
-    
+
   @if(profile != null){
    <img src="@profile.pictureUrl" />
    <h1>@profile.firstName @profile.lastName</h1>
    <h2>@profile.headline | @profile.industry</h2>
    <p>
     @profile.summary
-   </p> 
+   </p>
   }
   <h2>Connections</h2>
   @if(connections != null && connections.values != null) {
@@ -22,5 +22,5 @@
     }
   </ul>
   }
-    
+
 }

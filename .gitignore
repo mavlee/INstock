@@ -1,2 +1,6 @@
 node_modules
 *.swp
+conf
+logs
+project
+target
