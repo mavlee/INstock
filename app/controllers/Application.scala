@@ -16,7 +16,7 @@ import com.google.gson.Gson
 import json.Profile
 import json.Connections
 import json.Company
-import json.Companies
+import json.Positions
 
 object Application extends Controller {
 
@@ -30,14 +30,16 @@ object Application extends Controller {
         val accessToken = new Token(k,accSecret.get)
         //get the data
         val profileData = getProfileData(oauthService,accessToken).getBody()
-        println(profileData)
         val connectionData = getConnectionData(oauthService,accessToken).getBody()
         val gson = new Gson() //created to make the objects
         val connections = gson.fromJson(connectionData,classOf[Connections])
         //sort
         connections.values = connections.values.sortWith((x,y) => x.firstName < y.firstName)
-        Ok(views.html.index.render(gson.fromJson(profileData,classOf[Profile]),
-            connections))
+        val myProfile = gson.fromJson(profileData,classOf[Profile])
+        println("Positions: " + myProfile.positions)
+        val myPositions = gson.fromJson(myProfile.positions.toString, classOf[Positions])
+        println("Positions: " + myPositions)
+        Ok(views.html.index.render(myProfile, connections))
       }
       case _ =>{
         Logger.info("Redirecting to auth page")
@@ -106,7 +108,7 @@ object Application extends Controller {
   }
 
   def getProfileData(oauthService:OAuthService,accessToken:Token):Response = {
-    val fields = "(id,first-name,last-name,summary,industry,headline,picture-url,positions:(company:(name,ticker),start-date,end-date))"
+    val fields = "(id,first-name,last-name,summary,industry,headline,picture-url,positions:(company:(name,ticker)))"
     val requestURL = "http://api.linkedin.com/v1/people/~:"+fields+"?format=json"
     val req = new OAuthRequest(Verb.GET, requestURL);
     val oauthService = getOauthService

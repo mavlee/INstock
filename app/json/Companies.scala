@@ -1,5 +1,5 @@
 package json
 
-class Companies(var _total:java.lang.Integer, var values:Array[Company])
+class Positions(var _total:java.lang.Integer, var values:Array[Any])
 
-class Company(var name:String, var ticker:String, var startDate:String, var endDate:String)
+class Company(var name:String, var ticker:String)
