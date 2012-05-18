@@ -104,7 +104,7 @@ object Application extends Controller {
   }
 
   def getProfileData(oauthService:OAuthService,accessToken:Token):Response = {
-    val fields = "(id,first-name,last-name,summary,industry,headline,picture-url,positions:(company:(ticker),start-date,end-date))"
+    val fields = "(id,first-name,last-name,summary,industry,headline,picture-url,positions:(company:(name,ticker),start-date,end-date))"
     val requestURL = "http://api.linkedin.com/v1/people/~:"+fields+"?format=json"
     val req = new OAuthRequest(Verb.GET, requestURL);
     val oauthService = getOauthService
