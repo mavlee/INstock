@@ -39,14 +39,19 @@ object Application extends Controller {
         println("Positions: " + myProfile.positions.getClass)
         import scala.collection.JavaConversions._
         var myPositions = myProfile.positions.asInstanceOf[java.util.LinkedHashMap[String, Any]].get("values").asInstanceOf[java.util.ArrayList[java.util.HashMap[String, java.util.HashMap[String, Any]]]].toList
-        myPositions = myPositions.filter(_.get("company").containsKey("ticker")).filter(_.containsKey("startDate")).filter(_.containsKey("endDate"))
+        myPositions = myPositions.filter(_.get("company").containsKey("ticker")).filter(_.containsKey("startDate"))
         println("Positions: " + myPositions)
         myPositions.foreach{ p =>
           val ticker = p.get("company").get("ticker")
-          val startDate = p.get("startDate")
-          val endDate = p.get("endDate")
+          val startDate = p.get("startDate").asInstanceOf[java.util.HashMap[String, Double]]
+          val startMonth = startDate.get("month").toInt
+          val startYear = startDate.get("month").toInt
+
+          val endDate = if (p.containsKey("endDate")) p.get("endDate").asInstanceOf[java.util.HashMap[String, Double]] else new java.util.HashMap[String, Double]()
+          val today = new java.util.Date
+          val endMonth = if (endDate.contains("month")) endDate.get("month").toInt else today.getMonth
+          val endYear = if (endDate.contains("year")) endDate.get("month").toInt else today.getYear
           println("ticker: %s\nstartDate: %s\nendDate: %s".format(ticker, startDate, endDate))
-        
         }
         Ok(views.html.index.render(myProfile, connections))
       }
@@ -132,5 +137,12 @@ object Application extends Controller {
     oauthService.signRequest(accessToken, req);
     req.send();
   }
-}
 
+  def getStockData(ticker:String,sM:Integer,sY:Integer,eM:Integer,eY:Integer):Response = {
+    val fields = "(id,first-name,last-name,summary,industry,headline,picture-url)"
+    val requestURL = "http://api.linkedin.com/v1/people/~/connections:"+fields+"?format=json"
+    val req = new OAuthRequest(Verb.GET, requestURL);
+    //oauthService.signRequest(accessToken, req);
+    req.send();
+  }
+}
