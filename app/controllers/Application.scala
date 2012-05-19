@@ -36,9 +36,18 @@ object Application extends Controller {
         //sort
         connections.values = connections.values.sortWith((x,y) => x.firstName < y.firstName)
         val myProfile = gson.fromJson(profileData,classOf[Profile])
-        println("Positions: " + myProfile.positions)
-        val myPositions = gson.fromJson(myProfile.positions.toString, classOf[Positions])
+        println("Positions: " + myProfile.positions.getClass)
+        import scala.collection.JavaConversions._
+        var myPositions = myProfile.positions.asInstanceOf[java.util.LinkedHashMap[String, Any]].get("values").asInstanceOf[java.util.ArrayList[java.util.HashMap[String, java.util.HashMap[String, Any]]]].toList
+        myPositions = myPositions.filter(_.get("company").containsKey("ticker")).filter(_.containsKey("startDate")).filter(_.containsKey("endDate"))
         println("Positions: " + myPositions)
+        myPositions.foreach{ p =>
+          val ticker = p.get("company").get("ticker")
+          val startDate = p.get("startDate")
+          val endDate = p.get("endDate")
+          println("ticker: %s\nstartDate: %s\nendDate: %s".format(ticker, startDate, endDate))
+        
+        }
         Ok(views.html.index.render(myProfile, connections))
       }
       case _ =>{
@@ -108,7 +117,7 @@ object Application extends Controller {
   }
 
   def getProfileData(oauthService:OAuthService,accessToken:Token):Response = {
-    val fields = "(id,first-name,last-name,summary,industry,headline,picture-url,positions:(company:(name,ticker)))"
+    val fields = "(id,first-name,last-name,summary,industry,headline,picture-url,positions:(company:(name,ticker),start-date,end-date))"
     val requestURL = "http://api.linkedin.com/v1/people/~:"+fields+"?format=json"
     val req = new OAuthRequest(Verb.GET, requestURL);
     val oauthService = getOauthService
