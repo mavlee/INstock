@@ -44,7 +44,7 @@ object Application extends Controller {
         var myPositions = myProfile.positions.asInstanceOf[java.util.LinkedHashMap[String, Any]].get("values").asInstanceOf[java.util.ArrayList[java.util.HashMap[String, java.util.HashMap[String, Any]]]].toList
         myPositions = myPositions.filter(_.get("company").containsKey("ticker")).filter(_.containsKey("startDate"))
         println("Positions: " + myPositions)
-        myPositions.foreach{ p =>
+        val stocks = myPositions.map{ p =>
           val ticker = p.get("company").get("ticker").toString
           val startDate = p.get("startDate").asInstanceOf[java.util.HashMap[String, Double]]
           val startMonth = startDate.get("month").toInt
@@ -57,8 +57,9 @@ object Application extends Controller {
           println("ticker: %s\nstartDate: %s\nendDate: %s".format(ticker, startDate, endDate))
           val stockInfo = getStockData(ticker, startMonth, startYear, endMonth, endYear)
           println("startPrice: %s\nendPrice: %s\nchange: %s\n".format(stockInfo._1, stockInfo._2, stockInfo._3))
+          (ticker.toString, stockInfo._1.toDouble, stockInfo._2.toDouble, stockInfo._3.toDouble)
         }
-        Ok(views.html.index.render(myProfile, connections))
+        Ok(views.html.index.render(myProfile, stocks))
       }
       case _ =>{
         Logger.info("Redirecting to auth page")
