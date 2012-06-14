@@ -42,10 +42,12 @@ object Application extends Controller {
         println("Positions: " + myProfile.positions.getClass)
         import scala.collection.JavaConversions._
         var myPositions = myProfile.positions.asInstanceOf[java.util.LinkedHashMap[String, Any]].get("values").asInstanceOf[java.util.ArrayList[java.util.HashMap[String, java.util.HashMap[String, Any]]]].toList
-        myPositions = myPositions.filter(_.get("company").containsKey("ticker")).filter(_.containsKey("startDate"))
+        //myPositions = myPositions.filter(_.get("company").containsKey("ticker")).filter(_.containsKey("startDate"))
+        myPositions = myPositions.filter(_.get("company").containsKey("name")).filter(_.containsKey("startDate"))
         println("Positions: " + myPositions)
         val stocks = myPositions.map{ p =>
-          val ticker = p.get("company").get("ticker").toString
+          //val ticker = p.get("company").get("ticker").toString
+          val ticker = if (p.get("company").containsKey("ticker")) p.get("company").get("ticker").toString else p.get("company").get("name").toString
           val startDate = p.get("startDate").asInstanceOf[java.util.HashMap[String, Double]]
           val startMonth = startDate.get("month").toInt
           val startYear = startDate.get("year").toInt
@@ -159,9 +161,13 @@ object Application extends Controller {
   }
 
   def getStockPrice(stock:String, month:Int, year:Int):Double = {
-    val url = "http://ichart.yahoo.com/table.csv?s=%s&a=%d&b=1&c=%d&d=%d&e=31&f=%d&g=w&ignore=.csv".format(stock, (month-1), year, (month-1), year)
-    val connection = new URL(url).openConnection
-    val lines = Source.fromInputStream(connection.getInputStream).getLines.drop(1).toList
-    lines.map(_.split(",").drop(1).dropRight(2).map(_.toDouble).fold(0.0)(_+_)/4).fold(0.0)(_+_)/lines.size
+    try {
+      val url = "http://ichart.yahoo.com/table.csv?s=%s&a=%d&b=1&c=%d&d=%d&e=31&f=%d&g=w&ignore=.csv".format(stock, (month-1), year, (month-1), year)
+      val connection = new URL(url).openConnection
+      val lines = Source.fromInputStream(connection.getInputStream).getLines.drop(1).toList
+      lines.map(_.split(",").drop(1).dropRight(2).map(_.toDouble).fold(0.0)(_+_)/4).fold(0.0)(_+_)/lines.size
+    } catch {
+      case _ => 1
+    }
   }
 }
