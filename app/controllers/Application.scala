@@ -152,7 +152,7 @@ object Application extends Controller {
       (startPrice, endPrice, change)
     } catch {
       case e:FileNotFoundException => {
-        println("%s %d %d %d %d".format(ticker, sM, sY, eM, eY)) 
+        println("%s %d %d %d %d".format(ticker, sM, sY, eM, eY))
         (0, 0, 0)
       }
     }
@@ -163,7 +163,5 @@ object Application extends Controller {
     val connection = new URL(url).openConnection
     val lines = Source.fromInputStream(connection.getInputStream).getLines.drop(1).toList
     lines.map(_.split(",").drop(1).dropRight(2).map(_.toDouble).fold(0.0)(_+_)/4).fold(0.0)(_+_)/lines.size
-
   }
-
 }

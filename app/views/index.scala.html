@@ -1,18 +1,16 @@
 @(profile: json.Profile, stockInfo:List[(String, Double, Double, Double)])
 
 @main("Your Profile") {
-
   @if(profile != null){
-   <img src="@profile.pictureUrl" />
-   <h1>@profile.firstName @profile.lastName</h1>
-   <h2>@profile.headline | @profile.industry</h2>
-   <ul>
-       @for(stock <- stockInfo){
-       @if(stock._4 != 0) {
-       <li>@stock._1 @stock._4</li>
-       }
-
-   }
+    <img src="@profile.pictureUrl" />
+    <h1>@profile.firstName @profile.lastName</h1>
+    <h2>@profile.headline | @profile.industry</h2>
+    <ul>
+      @for(stock <- stockInfo){
+        @if(stock._4 != 0) {
+          <li><strong>@stock._1</strong> - @stock._4</li>
+        }
+      }
    </ul>
   }
 }
