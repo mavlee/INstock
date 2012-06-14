@@ -1,6 +1,9 @@
 package controllers
 
+import io.Source
+import java.net.URL
 import java.lang._
+import java.io.FileNotFoundException
 import play.api._
 import play.api.mvc._
 import org.scribe.oauth.OAuthService
@@ -42,16 +45,18 @@ object Application extends Controller {
         myPositions = myPositions.filter(_.get("company").containsKey("ticker")).filter(_.containsKey("startDate"))
         println("Positions: " + myPositions)
         myPositions.foreach{ p =>
-          val ticker = p.get("company").get("ticker")
+          val ticker = p.get("company").get("ticker").toString
           val startDate = p.get("startDate").asInstanceOf[java.util.HashMap[String, Double]]
           val startMonth = startDate.get("month").toInt
-          val startYear = startDate.get("month").toInt
+          val startYear = startDate.get("year").toInt
 
           val endDate = if (p.containsKey("endDate")) p.get("endDate").asInstanceOf[java.util.HashMap[String, Double]] else new java.util.HashMap[String, Double]()
           val today = new java.util.Date
           val endMonth = if (endDate.contains("month")) endDate.get("month").toInt else today.getMonth
-          val endYear = if (endDate.contains("year")) endDate.get("month").toInt else today.getYear
+          val endYear = if (endDate.contains("year")) endDate.get("year").toInt else (1900+today.getYear)
           println("ticker: %s\nstartDate: %s\nendDate: %s".format(ticker, startDate, endDate))
+          val stockInfo = getStockData(ticker, startMonth, startYear, endMonth, endYear)
+          println("startPrice: %s\nendPrice: %s\nchange: %s\n".format(stockInfo._1, stockInfo._2, stockInfo._3))
         }
         Ok(views.html.index.render(myProfile, connections))
       }
@@ -138,11 +143,26 @@ object Application extends Controller {
     req.send();
   }
 
-  def getStockData(ticker:String,sM:Integer,sY:Integer,eM:Integer,eY:Integer):Response = {
-    val fields = "(id,first-name,last-name,summary,industry,headline,picture-url)"
-    val requestURL = "http://api.linkedin.com/v1/people/~/connections:"+fields+"?format=json"
-    val req = new OAuthRequest(Verb.GET, requestURL);
-    //oauthService.signRequest(accessToken, req);
-    req.send();
+  def getStockData(ticker:String,sM:Int,sY:Int,eM:Int,eY:Int):(Double, Double, Double) = {
+    try {
+      val startPrice = getStockPrice(ticker, sM, sY)
+      val endPrice = getStockPrice(ticker, eM, eY)
+      val change = (endPrice-startPrice)/startPrice
+      (startPrice, endPrice, change)
+    } catch {
+      case e:FileNotFoundException => {
+        println("%s %d %d %d %d".format(ticker, sM, sY, eM, eY)) 
+        (0, 0, 0)
+      }
+    }
   }
+
+  def getStockPrice(stock:String, month:Int, year:Int):Double = {
+    val url = "http://ichart.yahoo.com/table.csv?s=%s&a=%d&b=1&c=%d&d=%d&e=31&f=%d&g=w&ignore=.csv".format(stock, (month-1), year, (month-1), year)
+    val connection = new URL(url).openConnection
+    val lines = Source.fromInputStream(connection.getInputStream).getLines.drop(1).toList
+    lines.map(_.split(",").drop(1).dropRight(2).map(_.toDouble).fold(0.0)(_+_)/4).fold(0.0)(_+_)/lines.size
+
+  }
+
 }
