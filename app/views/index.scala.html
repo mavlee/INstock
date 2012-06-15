@@ -12,30 +12,35 @@
           <img src="@profile.pictureUrl" />
         </div>
       </div>
-      <table class="table">
-        <thead>
-          <th>Company</th>
-          <th>Start Price</th>
-          <th>End Price</th>
-          <th>Percentage Change</th>
-        </thead>
-        <tbody>
-          @for(stock <- stockInfo){
-            <tr>
-              <td>@stock._1</td>
-              <td>@stock._2</td>
-              <td>@stock._3</td>
-              <td>@stock._4</td>
-            </tr>
-          }
-          <tr>
-            <td><strong>Total Percentage Change</strong></td>
-            <td></td>
-            <td></td>
-            <td>@totalChange</td>
-          </tr>
-        </tbody>
-      </table>
+      <br/>
+      <div class="row">
+        <div class="span12">
+          <table class="table table-bordered">
+            <thead>
+              <th>Company</th>
+              <th>Start Price</th>
+              <th>End Price</th>
+              <th>Percentage Change</th>
+            </thead>
+            <tbody>
+              @for(stock <- stockInfo){
+                <tr>
+                  <td>@stock._1</td>
+                  <td>@stock._2</td>
+                  <td>@stock._3</td>
+                  <td>@stock._4</td>
+                </tr>
+              }
+              <tr>
+                <td><strong>Total Percentage Change</strong></td>
+                <td></td>
+                <td></td>
+                <td>@totalChange</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   }
 }
