@@ -42,14 +42,14 @@ object Application extends Controller {
         //sort
         import scala.collection.JavaConversions._
         connections.values = connections.values.sortWith((x,y) => x.firstName < y.firstName)
-        connections.values.foreach {x=>println(x.firstName)}
         val friendsScores = connections.values.map{ friend => {
-          val theirStocks = getPositions(friend.positions).map{x=>(x._1, x._2, x._3.doubleValue, x._4.doubleValue, x._5.doubleValue)} 
-          val theirChange = theirStocks.foldLeft(1.0){(x:scala.Double,y:(String, String, scala.Double, scala.Double, scala.Double))=>
-            x.doubleValue*(y._5.doubleValue + 1)
+          val theirStocks = getPositions(friend.positions)
+          var theirChange = theirStocks.foldLeft(1.0){(x:scala.Double,y:(String, String, scala.Double, scala.Double, scala.Double))=>
+            x.doubleValue*(y._5.doubleValue/100 + 1)
           }
+          theirChange = scala.math.round((theirChange-1.0)*10000)/100.0
           (friend.firstName, friend.lastName, theirChange, theirStocks)
-        }}.sortWith((x,y) => x._3 > y._3)
+        }}.filter(_._3!=0).sortWith((x,y) => x._3 > y._3)
         friendsScores.foreach{x=>println("%s %s %s".format(x._1, x._2, x._3))}
         val myProfile = gson.fromJson(profileData,classOf[Profile])
         val stocks = getPositions(myProfile.positions)
