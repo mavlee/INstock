@@ -58,7 +58,7 @@ object Application extends Controller {
 
           val endDate = if (p.containsKey("endDate")) p.get("endDate").asInstanceOf[java.util.HashMap[String, Double]] else new java.util.HashMap[String, Double]()
           val today = new java.util.Date
-          val endMonth = if (endDate.contains("month")) endDate.get("month").toInt else today.getMonth
+          val endMonth = if (endDate.contains("month")) endDate.get("month").toInt else (1+today.getMonth)
           val endYear = if (endDate.contains("year")) endDate.get("year").toInt else (1900+today.getYear)
           println("ticker: %s\nstartDate: %s\nendDate: %s".format(ticker, startDate, endDate))
           val stockInfo = getStockData(ticker, startMonth, startYear, endMonth, endYear)
@@ -169,10 +169,14 @@ object Application extends Controller {
     try {
       val url = "http://ichart.yahoo.com/table.csv?s=%s&a=%d&b=1&c=%d&d=%d&e=31&f=%d&g=w&ignore=.csv".format(stock, (month-1), year, (month-1), year)
       val connection = new URL(url).openConnection
-      val lines = Source.fromInputStream(connection.getInputStream).getLines.drop(1).toList
-      val res = lines.map(_.split(",").drop(1).dropRight(2).map(_.toDouble).fold(0.0)(_+_)/4).fold(0.0)(_+_)/lines.size
-      println("%s %d %d %s".format(stock, month, year, res))
-      res
+      var lines = Source.fromInputStream(connection.getInputStream).getLines.drop(1).toList
+      lines = lines.filter{x:String => (x.split(",").head.split("-").head.toInt == year)}
+      if (lines.size == 0) 1
+      else {
+        val res = lines.map(_.split(",").drop(1).dropRight(2).map(_.toDouble).fold(0.0)(_+_)/4).fold(0.0)(_+_)/lines.size
+        println("%s %d %d %s".format(stock, month, year, res))
+        res
+      }
     } catch {
       case _ => 1
     }
