@@ -1,4 +1,4 @@
-@(profile: json.Profile, stockInfo:List[(String, Double, Double, Double)], totalChange: Double)
+@(profile: json.Profile, stockInfo:List[(String, String, Double, Double, Double)], totalChange: Double)
 
 @main("Your Profile") {
   @if(profile != null){
@@ -18,6 +18,7 @@
           <table class="table table-bordered">
             <thead>
               <th>Company</th>
+              <th>Ticker</th>
               <th>Start Price</th>
               <th>End Price</th>
               <th>Percentage Change</th>
@@ -29,10 +30,12 @@
                   <td>@stock._2</td>
                   <td>@stock._3</td>
                   <td>@stock._4</td>
+                  <td>@stock._5</td>
                 </tr>
               }
               <tr>
                 <td><strong>Total Percentage Change</strong></td>
+                <td></td>
                 <td></td>
                 <td></td>
                 <td>@totalChange</td>
