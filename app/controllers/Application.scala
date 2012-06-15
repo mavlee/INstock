@@ -46,12 +46,11 @@ object Application extends Controller {
         println("Positions: " + myProfile.positions.getClass)
         import scala.collection.JavaConversions._
         var myPositions = myProfile.positions.asInstanceOf[java.util.LinkedHashMap[String, Any]].get("values").asInstanceOf[java.util.ArrayList[java.util.HashMap[String, java.util.HashMap[String, Any]]]].toList
-        //myPositions = myPositions.filter(_.get("company").containsKey("ticker")).filter(_.containsKey("startDate"))
         myPositions = myPositions.filter(_.get("company").containsKey("name")).filter(_.containsKey("startDate"))
         println("Positions: " + myPositions)
         val stocks = myPositions.map{ p =>
-          //val ticker = p.get("company").get("ticker").toString
-          val ticker = if (p.get("company").containsKey("ticker")) p.get("company").get("ticker").toString else p.get("company").get("name").toString
+          val ticker = if (p.get("company").containsKey("ticker")) p.get("company").get("ticker").toString else "N/A"
+          val companyName = p.get("company").get("name").toString
           val startDate = p.get("startDate").asInstanceOf[java.util.HashMap[String, Double]]
           val startMonth = startDate.get("month").toInt
           val startYear = startDate.get("year").toInt
@@ -64,9 +63,9 @@ object Application extends Controller {
           val stockInfo = getStockData(ticker, startMonth, startYear, endMonth, endYear)
           println("startPrice: %s\nendPrice: %s\nchange: %s\n".format(stockInfo._1, stockInfo._2, stockInfo._3))
           totalChange *= (stockInfo._3.toDouble + 1)
-          (ticker.toString, stockInfo._1.toDouble, stockInfo._2.toDouble, stockInfo._3.toDouble)
+          (companyName, ticker.toString, stockInfo._1.toDouble, stockInfo._2.toDouble, stockInfo._3.toDouble)
         }
-        Ok(views.html.index.render(myProfile, stocks, totalChange-1.0))
+        Ok(views.html.index.render(myProfile, stocks, scala.math.round((totalChange-1.0) * 10000)/10000.0))
       }
       case _ =>{
         Logger.info("Redirecting to auth page")
@@ -153,9 +152,9 @@ object Application extends Controller {
 
   def getStockData(ticker:String,sM:Int,sY:Int,eM:Int,eY:Int):(Double, Double, Double) = {
     try {
-      val startPrice = getStockPrice(ticker, sM, sY)
-      val endPrice = getStockPrice(ticker, eM, eY)
-      val change = (endPrice-startPrice)/startPrice
+      val startPrice = scala.math.round(getStockPrice(ticker, sM, sY) * 10000) / 10000.0
+      val endPrice = scala.math.round(getStockPrice(ticker, eM, eY) * 10000) / 10000.0
+      val change = scala.math.round((endPrice-startPrice) * 10000/startPrice) / 10000.0
       (startPrice, endPrice, change)
     } catch {
       case e:FileNotFoundException => {
