@@ -165,7 +165,9 @@ object Application extends Controller {
       val url = "http://ichart.yahoo.com/table.csv?s=%s&a=%d&b=1&c=%d&d=%d&e=31&f=%d&g=w&ignore=.csv".format(stock, (month-1), year, (month-1), year)
       val connection = new URL(url).openConnection
       val lines = Source.fromInputStream(connection.getInputStream).getLines.drop(1).toList
-      lines.map(_.split(",").drop(1).dropRight(2).map(_.toDouble).fold(0.0)(_+_)/4).fold(0.0)(_+_)/lines.size
+      val res = lines.map(_.split(",").drop(1).dropRight(2).map(_.toDouble).fold(0.0)(_+_)/4).fold(0.0)(_+_)/lines.size
+      println("%s %d %d %s".format(stock, month, year, res))
+      res
     } catch {
       case _ => 1
     }
