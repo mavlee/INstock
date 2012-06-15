@@ -45,7 +45,7 @@ object Application extends Controller {
         val friendsScores = connections.values.map{ friend => {
           val theirStocks = getPositions(friend.positions)
           var theirChange = theirStocks.foldLeft(1.0){(x:scala.Double,y:(String, String, scala.Double, scala.Double, scala.Double))=>
-            x.doubleValue*(y._5.doubleValue/100 + 1)
+            x.doubleValue*(y._5.doubleValue/100 + 1.0)
           }
           theirChange = scala.math.round((theirChange-1.0)*10000)/100.0
           (friend.firstName, friend.lastName, theirChange, theirStocks)
@@ -55,7 +55,7 @@ object Application extends Controller {
         stocks.foreach {stockInfo =>
           totalChange *= (stockInfo._5.toDouble + 1)
         }
-        Ok(views.html.index.render(myProfile, stocks, scala.math.round((totalChange-1.0) * 10000)/10000.0))
+        Ok(views.html.index.render(myProfile, stocks, scala.math.round((totalChange-1.0) * 10000)/10000.0, friendsScores.toList))
       }
       case _ =>{
         Logger.info("Redirecting to auth page")
@@ -66,7 +66,7 @@ object Application extends Controller {
 
   def getPositions(positions: Any):List[(String, String, scala.Double, scala.Double, scala.Double)] = {
     import scala.collection.JavaConversions._
-    if (positions==null||(!positions.asInstanceOf[java.util.LinkedHashMap[String, Any]].containsKey("values"))) 
+    if (positions==null||(!positions.asInstanceOf[java.util.LinkedHashMap[String, Any]].containsKey("values")))
       List.empty[(String, String, Double, Double, Double)]
     else {
       var myPositions = positions.asInstanceOf[java.util.LinkedHashMap[String, Any]].get("values").asInstanceOf[java.util.ArrayList[java.util.HashMap[String, java.util.HashMap[String, Any]]]].toList

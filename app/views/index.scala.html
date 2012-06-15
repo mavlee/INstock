@@ -1,4 +1,4 @@
-@(profile: json.Profile, stockInfo:List[(String, String, Double, Double, Double)], totalChange: Double)
+@(profile: json.Profile, stockInfo:List[(String, String, Double, Double, Double)], totalChange: Double, friendsScores: List[(String, String, Double, List[(String, String, Double, Double, Double)])])
 
 @main("Your Profile") {
   @if(profile != null){
@@ -56,6 +56,34 @@
                 <td></td>
                 <td><strong>@totalChange%</strong></td>
               </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- FRIENDS -->
+      <div class="row">
+        <div class="span12">
+          <table class="table table-bordered">
+            <thead>
+              <th>Friend</th>
+              <th>Percentage Change</th>
+            </thead>
+            <tbody>
+              @for(friend <- friendsScores){
+                @if(friend._3 > 0) {
+                  <tr class="positive">
+                } else {
+                  @if(friend._3 < 0) {
+                    <tr class="negative">
+                  } else {
+                    <tr>
+                  }
+                }
+                  <td>@friend._1 @friend._2</td>
+                  <td>@friend._3%</td>
+                </tr>
+              }
             </tbody>
           </table>
         </div>
