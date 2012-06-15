@@ -31,11 +31,15 @@ object Application extends Controller {
       case Some(k:String) => {
         val oauthService = getOauthService
         val accessToken = new Token(k,accSecret.get)
+
+        var totalChange = 1.0
+
         //get the data
         val profileData = getProfileData(oauthService,accessToken).getBody()
         val connectionData = getConnectionData(oauthService,accessToken).getBody()
         val gson = new Gson() //created to make the objects
         val connections = gson.fromJson(connectionData,classOf[Connections])
+
         //sort
         connections.values = connections.values.sortWith((x,y) => x.firstName < y.firstName)
         val myProfile = gson.fromJson(profileData,classOf[Profile])
@@ -59,9 +63,10 @@ object Application extends Controller {
           println("ticker: %s\nstartDate: %s\nendDate: %s".format(ticker, startDate, endDate))
           val stockInfo = getStockData(ticker, startMonth, startYear, endMonth, endYear)
           println("startPrice: %s\nendPrice: %s\nchange: %s\n".format(stockInfo._1, stockInfo._2, stockInfo._3))
+          totalChange *= (stockInfo._3.toDouble + 1)
           (ticker.toString, stockInfo._1.toDouble, stockInfo._2.toDouble, stockInfo._3.toDouble)
         }
-        Ok(views.html.index.render(myProfile, stocks))
+        Ok(views.html.index.render(myProfile, stocks, totalChange-1.0))
       }
       case _ =>{
         Logger.info("Redirecting to auth page")
