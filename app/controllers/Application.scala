@@ -44,26 +44,9 @@ object Application extends Controller {
         connections.values = connections.values.sortWith((x,y) => x.firstName < y.firstName)
         val myProfile = gson.fromJson(profileData,classOf[Profile])
         println("Positions: " + myProfile.positions.getClass)
-        import scala.collection.JavaConversions._
-        var myPositions = myProfile.positions.asInstanceOf[java.util.LinkedHashMap[String, Any]].get("values").asInstanceOf[java.util.ArrayList[java.util.HashMap[String, java.util.HashMap[String, Any]]]].toList
-        myPositions = myPositions.filter(_.get("company").containsKey("name")).filter(_.containsKey("startDate"))
-        println("Positions: " + myPositions)
-        val stocks = myPositions.map{ p =>
-          val ticker = if (p.get("company").containsKey("ticker")) p.get("company").get("ticker").toString else "N/A"
-          val companyName = p.get("company").get("name").toString
-          val startDate = p.get("startDate").asInstanceOf[java.util.HashMap[String, Double]]
-          val startMonth = if (startDate.containsKey("month")) startDate.get("month").toInt else 6
-          val startYear = startDate.get("year").toInt
-
-          val endDate = if (p.containsKey("endDate")) p.get("endDate").asInstanceOf[java.util.HashMap[String, Double]] else new java.util.HashMap[String, Double]()
-          val today = new java.util.Date
-          val endMonth = if (endDate.contains("month")) endDate.get("month").toInt else (1+today.getMonth)
-          val endYear = if (endDate.contains("year")) endDate.get("year").toInt else (1900+today.getYear)
-          println("ticker: %s\nstartDate: %s\nendDate: %s".format(ticker, startDate, endDate))
-          val stockInfo = getStockData(ticker, startMonth, startYear, endMonth, endYear)
-          println("startPrice: %s\nendPrice: %s\nchange: %s\n".format(stockInfo._1, stockInfo._2, stockInfo._3))
-          totalChange *= (stockInfo._3.toDouble + 1)
-          (companyName, ticker.toString, stockInfo._1.toDouble, stockInfo._2.toDouble, stockInfo._3.toDouble)
+        val stocks = getPositions(myProfile.positions)
+        stocks.foreach {stockInfo =>
+          totalChange *= (stockInfo._5.toDouble + 1)
         }
         Ok(views.html.index.render(myProfile, stocks, scala.math.round((totalChange-1.0) * 10000)/10000.0))
       }
@@ -72,6 +55,30 @@ object Application extends Controller {
         Redirect(routes.Application.auth())
       }
     }
+  }
+
+  def getPositions(positions: Any):List[(String, String, scala.Double, scala.Double, scala.Double)] = {
+    import scala.collection.JavaConversions._
+    var myPositions = positions.asInstanceOf[java.util.LinkedHashMap[String, Any]].get("values").asInstanceOf[java.util.ArrayList[java.util.HashMap[String, java.util.HashMap[String, Any]]]].toList
+    myPositions = myPositions.filter(_.get("company").containsKey("name")).filter(_.containsKey("startDate"))
+    println("Positions: " + myPositions)
+    val stocks = myPositions.map{ p =>
+      val ticker = if (p.get("company").containsKey("ticker")) p.get("company").get("ticker").toString else "N/A"
+      val companyName = p.get("company").get("name").toString
+      val startDate = p.get("startDate").asInstanceOf[java.util.HashMap[String, Double]]
+      val startMonth = if (startDate.containsKey("month")) startDate.get("month").toInt else 6
+      val startYear = startDate.get("year").toInt
+
+      val endDate = if (p.containsKey("endDate")) p.get("endDate").asInstanceOf[java.util.HashMap[String, Double]] else new java.util.HashMap[String, Double]()
+      val today = new java.util.Date
+      val endMonth = if (endDate.contains("month")) endDate.get("month").toInt else (1+today.getMonth)
+      val endYear = if (endDate.contains("year")) endDate.get("year").toInt else (1900+today.getYear)
+      println("ticker: %s\nstartDate: %s\nendDate: %s".format(ticker, startDate, endDate))
+      val stockInfo = getStockData(ticker, startMonth, startYear, endMonth, endYear)
+      println("startPrice: %s\nendPrice: %s\nchange: %s\n".format(stockInfo._1, stockInfo._2, stockInfo._3))
+      (companyName.toString, ticker.toString, stockInfo._1.toDouble, stockInfo._2.toDouble, stockInfo._3.toDouble)
+    }
+    stocks
   }
 
   //the auth action step
@@ -154,7 +161,7 @@ object Application extends Controller {
     try {
       val startPrice = scala.math.round(getStockPrice(ticker, sM, sY) * 10000) / 10000.0
       val endPrice = scala.math.round(getStockPrice(ticker, eM, eY) * 10000) / 10000.0
-      val change = scala.math.round((endPrice-startPrice) * 10000/startPrice) / 10000.0
+      val change = scala.math.round((endPrice-startPrice) * 10000/startPrice) / 100.0
       (startPrice, endPrice, change)
     } catch {
       case e:FileNotFoundException => {
