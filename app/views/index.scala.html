@@ -5,27 +5,29 @@
     <img src="@profile.pictureUrl" />
     <h1>@profile.firstName @profile.lastName</h1>
     <h2>@profile.headline | @profile.industry</h2>
-    <table>
-      <tr>
+    <table class="table">
+      <thead>
         <th>Company</th>
         <th>Start Price</th>
         <th>End Price</th>
         <th>Percentage Change</th>
-      </tr>
-      @for(stock <- stockInfo){
+      </thead>
+      <tbody>
+        @for(stock <- stockInfo){
+          <tr>
+            <td>@stock._1</td>
+            <td>@stock._2</td>
+            <td>@stock._3</td>
+            <td>@stock._4</td>
+          </tr>
+        }
         <tr>
-          <td>@stock._1</td>
-          <td>@stock._2</td>
-          <td>@stock._3</td>
-          <td>@stock._4</td>
+          <td><strong>Total Percentage Change</strong></td>
+          <td></td>
+          <td></td>
+          <td>@totalChange</td>
         </tr>
-      }
-      <tr>
-        <td><strong>Total Percentage Change</strong></td>
-        <td></td>
-        <td></td>
-        <td>@totalChange</td>
-      </tr>
+      </tbody>
     </table>
   }
 }
