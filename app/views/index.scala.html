@@ -18,6 +18,9 @@
         </div>
       </div>
       <br/>
+      <!--
+      #{stock_table blah:@friendsScores(0) /}
+      -->
       <div class="row">
         <div class="span12">
           <table class="table table-bordered">
@@ -82,18 +85,6 @@
               </tr>
             </thead>
             <tbody>
-              @if(totalChange > 0) {
-                <tr class="positive">
-              } else {
-                @if(totalChange < 0) {
-                  <tr class="negative">
-                } else {
-                  <tr>
-                }
-              }
-              <td><strong>@profile.firstName @profile.lastName</strong></td>
-              <td>@totalChange%</td>
-              </tr>
               @for(friend <- friendsScores){
                 @if(friend._3 > 0) {
                   <tr class="positive">
