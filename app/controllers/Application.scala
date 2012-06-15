@@ -50,7 +50,6 @@ object Application extends Controller {
           theirChange = scala.math.round((theirChange-1.0)*10000)/100.0
           (friend.firstName, friend.lastName, theirChange, theirStocks)
         }}.filter(_._3!=0).sortWith((x,y) => x._3 > y._3)
-        friendsScores.foreach{x=>println("%s %s %s".format(x._1, x._2, x._3))}
         val myProfile = gson.fromJson(profileData,classOf[Profile])
         val stocks = getPositions(myProfile.positions)
         stocks.foreach {stockInfo =>
