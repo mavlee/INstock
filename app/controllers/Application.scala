@@ -2,7 +2,6 @@ package controllers
 
 import io.Source
 import java.net.URL
-import java.lang._
 import java.io.FileNotFoundException
 import play.api._
 import play.api.mvc._
@@ -41,9 +40,18 @@ object Application extends Controller {
         val connections = gson.fromJson(connectionData,classOf[Connections])
 
         //sort
+        import scala.collection.JavaConversions._
         connections.values = connections.values.sortWith((x,y) => x.firstName < y.firstName)
+        connections.values.foreach {x=>println(x.firstName)}
+        val friendsScores = connections.values.map{ friend => {
+          val theirStocks = getPositions(friend.positions).map{x=>(x._1, x._2, x._3.doubleValue, x._4.doubleValue, x._5.doubleValue)} 
+          val theirChange = theirStocks.foldLeft(1.0){(x:scala.Double,y:(String, String, scala.Double, scala.Double, scala.Double))=>
+            x.doubleValue*(y._5.doubleValue + 1)
+          }
+          (friend.firstName, friend.lastName, theirChange, theirStocks)
+        }}.sortWith((x,y) => x._3 > y._3)
+        friendsScores.foreach{x=>println("%s %s %s".format(x._1, x._2, x._3))}
         val myProfile = gson.fromJson(profileData,classOf[Profile])
-        println("Positions: " + myProfile.positions.getClass)
         val stocks = getPositions(myProfile.positions)
         stocks.foreach {stockInfo =>
           totalChange *= (stockInfo._5.toDouble + 1)
@@ -59,27 +67,28 @@ object Application extends Controller {
 
   def getPositions(positions: Any):List[(String, String, scala.Double, scala.Double, scala.Double)] = {
     import scala.collection.JavaConversions._
-    var myPositions = positions.asInstanceOf[java.util.LinkedHashMap[String, Any]].get("values").asInstanceOf[java.util.ArrayList[java.util.HashMap[String, java.util.HashMap[String, Any]]]].toList
-    myPositions = myPositions.filter(_.get("company").containsKey("name")).filter(_.containsKey("startDate"))
-    println("Positions: " + myPositions)
-    val stocks = myPositions.map{ p =>
+    if (positions==null||(!positions.asInstanceOf[java.util.LinkedHashMap[String, Any]].containsKey("values"))) 
+      List.empty[(String, String, Double, Double, Double)]
+    else {
+      var myPositions = positions.asInstanceOf[java.util.LinkedHashMap[String, Any]].get("values").asInstanceOf[java.util.ArrayList[java.util.HashMap[String, java.util.HashMap[String, Any]]]].toList
+      myPositions = myPositions.filter(_.get("company").containsKey("name")).filter(_.containsKey("startDate"))
+      val stocks = myPositions.map{ p =>
       val ticker = if (p.get("company").containsKey("ticker")) p.get("company").get("ticker").toString else "N/A"
-      val companyName = p.get("company").get("name").toString
-      val startDate = p.get("startDate").asInstanceOf[java.util.HashMap[String, Double]]
-      val startMonth = if (startDate.containsKey("month")) startDate.get("month").toInt else 6
-      val startYear = startDate.get("year").toInt
+        val companyName = p.get("company").get("name").toString
+        val startDate = p.get("startDate").asInstanceOf[java.util.HashMap[String, Double]]
+        val startMonth = if (startDate.containsKey("month")) startDate.get("month").toInt else 6
+          val startYear = startDate.get("year").toInt
 
-      val endDate = if (p.containsKey("endDate")) p.get("endDate").asInstanceOf[java.util.HashMap[String, Double]] else new java.util.HashMap[String, Double]()
-      val today = new java.util.Date
-      val endMonth = if (endDate.contains("month")) endDate.get("month").toInt else (1+today.getMonth)
-      val endYear = if (endDate.contains("year")) endDate.get("year").toInt else (1900+today.getYear)
-      println("ticker: %s\nstartDate: %s\nendDate: %s".format(ticker, startDate, endDate))
-      val stockInfo = getStockData(ticker, startMonth, startYear, endMonth, endYear)
-      println("startPrice: %s\nendPrice: %s\nchange: %s\n".format(stockInfo._1, stockInfo._2, stockInfo._3))
-      (companyName.toString, ticker.toString, stockInfo._1.toDouble, stockInfo._2.toDouble, stockInfo._3.toDouble)
-    }
-    stocks
-  }
+          val endDate = if (p.containsKey("endDate")) p.get("endDate").asInstanceOf[java.util.HashMap[String, Double]] else new java.util.HashMap[String, Double]()
+            val today = new java.util.Date
+            val endMonth = if (endDate.contains("month")) endDate.get("month").toInt else (1+today.getMonth)
+              val endYear = if (endDate.contains("year")) endDate.get("year").toInt else (1900+today.getYear)
+                val stockInfo = getStockData(ticker, startMonth, startYear, endMonth, endYear)
+                (companyName.toString, ticker.toString, stockInfo._1.toDouble, stockInfo._2.toDouble, stockInfo._3.toDouble)
+              }
+              stocks
+            }
+          }
 
   //the auth action step
   def auth = Action {
@@ -150,28 +159,21 @@ object Application extends Controller {
   }
 
   def getConnectionData(oauthService:OAuthService,accessToken:Token):Response = {
-    val fields = "(id,first-name,last-name,summary,industry,headline,picture-url)"
+    val fields = "(id,first-name,last-name,summary,industry,headline,picture-url,positions:(company:(name,ticker),start-date,end-date))"
     val requestURL = "http://api.linkedin.com/v1/people/~/connections:"+fields+"?format=json"
     val req = new OAuthRequest(Verb.GET, requestURL);
     oauthService.signRequest(accessToken, req);
     req.send();
   }
 
-  def getStockData(ticker:String,sM:Int,sY:Int,eM:Int,eY:Int):(Double, Double, Double) = {
-    try {
+  def getStockData(ticker:String,sM:Int,sY:Int,eM:Int,eY:Int):(scala.Double, scala.Double, scala.Double) = {
       val startPrice = scala.math.round(getStockPrice(ticker, sM, sY) * 10000) / 10000.0
       val endPrice = scala.math.round(getStockPrice(ticker, eM, eY) * 10000) / 10000.0
       val change = scala.math.round((endPrice-startPrice) * 10000/startPrice) / 100.0
       (startPrice, endPrice, change)
-    } catch {
-      case e:FileNotFoundException => {
-        println("%s %d %d %d %d".format(ticker, sM, sY, eM, eY))
-        (0, 0, 0)
-      }
-    }
   }
 
-  def getStockPrice(stock:String, month:Int, year:Int):Double = {
+  def getStockPrice(stock:String, month:Int, year:Int):scala.Double = {
     try {
       val url = "http://ichart.yahoo.com/table.csv?s=%s&a=%d&b=1&c=%d&d=%d&e=31&f=%d&g=w&ignore=.csv".format(stock, (month-1), year, (month-1), year)
       val connection = new URL(url).openConnection
@@ -180,7 +182,6 @@ object Application extends Controller {
       if (lines.size == 0) 1
       else {
         val res = lines.map(_.split(",").drop(1).dropRight(2).map(_.toDouble).fold(0.0)(_+_)/4).fold(0.0)(_+_)/lines.size
-        println("%s %d %d %s".format(stock, month, year, res))
         res
       }
     } catch {
