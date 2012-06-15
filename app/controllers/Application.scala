@@ -52,7 +52,7 @@ object Application extends Controller {
           val ticker = if (p.get("company").containsKey("ticker")) p.get("company").get("ticker").toString else "N/A"
           val companyName = p.get("company").get("name").toString
           val startDate = p.get("startDate").asInstanceOf[java.util.HashMap[String, Double]]
-          val startMonth = startDate.get("month").toInt
+          val startMonth = startDate.getOrElse("month", "6").toInt
           val startYear = startDate.get("year").toInt
 
           val endDate = if (p.containsKey("endDate")) p.get("endDate").asInstanceOf[java.util.HashMap[String, Double]] else new java.util.HashMap[String, Double]()
