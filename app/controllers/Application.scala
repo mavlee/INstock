@@ -49,13 +49,17 @@ object Application extends Controller {
           }
           theirChange = scala.math.round((theirChange-1.0)*10000)/100.0
           (friend.firstName, friend.lastName, theirChange, theirStocks)
-        }}.filter(_._3!=0).sortWith((x,y) => x._3 > y._3)
+        }}.filter(_._3!=0).sortWith((x,y) => x._3 > y._3).toList
+        val sample = friendsScores.last
+        println("%s %s %s".format(sample._1, sample._2, sample._3))
+        sample._4.foreach{ x=> println("%s %s %s %s".format(x._1, x._3, x._4, x._5))}
         val myProfile = gson.fromJson(profileData,classOf[Profile])
         val stocks = getPositions(myProfile.positions)
         stocks.foreach {stockInfo =>
           totalChange *= (stockInfo._5.toDouble + 1)
         }
-        Ok(views.html.index.render(myProfile, stocks, scala.math.round((totalChange-1.0) * 10000)/10000.0, friendsScores.toList))
+        val allScores = (myProfile.firstName, myProfile.lastName, totalChange, stocks):: friendsScores
+        Ok(views.html.index.render(myProfile, stocks, scala.math.round((totalChange-1.0) * 10000)/10000.0, allScores))
       }
       case _ =>{
         Logger.info("Redirecting to auth page")
