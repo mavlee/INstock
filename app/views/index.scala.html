@@ -25,7 +25,15 @@
             </thead>
             <tbody>
               @for(stock <- stockInfo){
-                <tr>
+                @if(stock._5 > 0) {
+                  <tr class="positive">
+                } else {
+                  @if(stock._5 < 0) {
+                    <tr class="negative">
+                  } else {
+                    <tr>
+                  }
+                }
                   <td>@stock._1</td>
                   <td>@stock._2</td>
                   <td>@stock._3</td>
@@ -33,7 +41,15 @@
                   <td>@stock._5%</td>
                 </tr>
               }
-              <tr>
+              @if(totalChange > 0) {
+                <tr class="positive">
+              } else {
+                @if(totalChange < 0) {
+                  <tr class="negative">
+                } else {
+                  <tr>
+                }
+              }
                 <td><strong>Total Percentage Change</strong></td>
                 <td></td>
                 <td></td>
