@@ -1,3 +1,4 @@
+@* @import views.tags.html._ *@
 @(profile: json.Profile, stockInfo:List[(String, String, Double, Double, Double)], totalChange: Double, friendsScores: List[(String, String, Double, List[(String, String, Double, Double, Double)])])
 
 @main("Your Profile") {
@@ -18,7 +19,7 @@
         </div>
       </div>
       <br/>
-      #{stock_table blah:@friendsScores(0) /}
+      @* @stockTable(friendsScores(0)) *@
       <div class="row">
         <div class="span12">
           <table class="table table-bordered">

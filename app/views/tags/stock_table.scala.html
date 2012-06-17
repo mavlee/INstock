@@ -1,9 +1,10 @@
+@(data: (String, String, Double, List[(String, String, Double, Double, Double)]))
 <div class="row">
   <div class="span12">
     <table class="table table-bordered">
       <thead>
         <tr>
-          <th colspan="4">${_arg}._1 ${_arg}._2</th>
+          <th colspan="4">@data._1 @data._2</th>
         </tr>
         <tr>
           <th>Company</th>
@@ -14,7 +15,7 @@
         </tr>
       </thead>
       <tbody>
-        @for(stock <- stockInfo){
+        @for(stock <- data._4){
           @if(stock._5 > 0) {
             <tr class="positive">
           } else {
@@ -31,10 +32,10 @@
             <td>@stock._5%</td>
           </tr>
         }
-        @if(totalChange > 0) {
+        @if(data._3 > 0) {
           <tr class="positive">
         } else {
-          @if(totalChange < 0) {
+          @if(data._3 < 0) {
             <tr class="negative">
           } else {
             <tr>
@@ -44,7 +45,7 @@
           <td></td>
           <td></td>
           <td></td>
-          <td><strong>@totalChange%</strong></td>
+          <td><strong>@data._3%</strong></td>
         </tr>
       </tbody>
     </table>
