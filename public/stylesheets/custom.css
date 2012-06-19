@@ -13,3 +13,7 @@ tr.negative {
 tr:hover.negative {
   background-color: #A63C3C;
 }
+
+.hidden {
+  display: none;
+}

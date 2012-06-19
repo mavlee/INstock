@@ -19,13 +19,14 @@
         </div>
       </div>
       <br/>
-      @* @stockTable(friendsScores(0)) *@
+
+      @for(friend <- friendsScores){
       <div class="row">
         <div class="span12">
-          <table class="table table-bordered">
+          <table class="table table-bordered stockdata hidden @friend._1 @friend._2">
             <thead>
               <tr>
-                <th colspan="4">@profile.firstName @profile.lastName</th>
+                <th colspan="4">@friend._1 @friend._2</th>
               </tr>
               <tr>
                 <th>Company</th>
@@ -36,7 +37,7 @@
               </tr>
             </thead>
             <tbody>
-              @for(stock <- stockInfo){
+              @for(stock <- friend._4){
                 @if(stock._5 > 0) {
                   <tr class="positive">
                 } else {
@@ -53,10 +54,10 @@
                   <td>@stock._5%</td>
                 </tr>
               }
-              @if(totalChange > 0) {
+              @if(friend._3 > 0) {
                 <tr class="positive">
               } else {
-                @if(totalChange < 0) {
+                @if(friend._3 < 0) {
                   <tr class="negative">
                 } else {
                   <tr>
@@ -66,17 +67,18 @@
                 <td></td>
                 <td></td>
                 <td></td>
-                <td><strong>@totalChange%</strong></td>
+                <td><strong>@friend._3%</strong></td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
+      }
 
       <!-- FRIENDS -->
       <div class="row">
         <div class="span12">
-          <table class="table table-bordered">
+          <table class="table table-bordered master">
             <thead>
               <tr>
                 <th>Person</th>
