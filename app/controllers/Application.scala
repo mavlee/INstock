@@ -212,7 +212,7 @@ object Application extends Controller {
       val connection = new URL(url).openConnection
       var lines = Source.fromInputStream(connection.getInputStream).getLines.drop(1).toList
       lines = lines.filter{x:String => (x.split(",").head.split("-").head.toInt == year)}
-      if (lines.size == 0) 10
+      if (lines.size == 0) 1
       else {
         val res = lines.map(_.split(",").drop(1).dropRight(2).map(_.toDouble).fold(0.0)(_+_)/4).fold(0.0)(_+_)/lines.size
         res
