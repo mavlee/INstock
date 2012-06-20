@@ -19,6 +19,8 @@ import json.Profile
 import json.Connections
 import json.Company
 import json.Positions
+import scala.actors.Future
+import scala.actors.Futures._
 
 object Application extends Controller {
 
@@ -41,15 +43,17 @@ object Application extends Controller {
 
         //sort
         import scala.collection.JavaConversions._
+        connections.values = sampleFromList(connections.values, 50)
         connections.values = connections.values.sortWith((x,y) => x.firstName < y.firstName)
-        val friendsScores = connections.values.map{ friend => {
+        val friendsFutures = connections.values.map{ friend => future{
           val theirStocks = getPositions(friend.positions)
           var theirChange = theirStocks.foldLeft(1.0){(x:scala.Double,y:(String, String, scala.Double, scala.Double, scala.Double))=>
             x.doubleValue*(y._5.doubleValue/100 + 1.0)
           }
           theirChange = scala.math.round((theirChange-1.0)*10000)/100.0
           (friend.firstName, friend.lastName, theirChange, theirStocks)
-        }}.filter(_._3!=0).sortWith((x,y) => x._3 > y._3).toList
+        }}
+        val friendsScores= friendsFutures.map{future => future()}.filter(_._3!=0).sortWith((x,y) => x._3 > y._3).toList
         val sample = friendsScores.last
         println("%s %s %s".format(sample._1, sample._2, sample._3))
         sample._4.foreach{ x=> println("%s %s %s %s".format(x._1, x._3, x._4, x._5))}
@@ -58,14 +62,35 @@ object Application extends Controller {
         stocks.foreach {stockInfo =>
           totalChange *= (stockInfo._5.toDouble + 1)
         }
+        totalChange = scala.math.round((totalChange-1.0) * 10000)/10000.0
         val allScores = (myProfile.firstName, myProfile.lastName, totalChange, stocks):: friendsScores
-        Ok(views.html.index.render(myProfile, stocks, scala.math.round((totalChange-1.0) * 10000)/10000.0, allScores))
+        Ok(views.html.index.render(myProfile, stocks, totalChange, allScores))
       }
       case _ =>{
         Logger.info("Redirecting to auth page")
         Redirect(routes.Application.auth())
       }
     }
+  }
+
+  def sampleFromList[A](xs : Array[A], n : Int):Array[A] = {
+    val len = xs.length
+    import java.util.Random
+    val r = new Random
+    var count = 0
+    var index = 0
+    var as = xs.take(n)
+    while (count < n) {
+      val stillNeed = n - count
+      val haveLeft = len - index
+      val prob = 1.0*stillNeed/haveLeft
+      if (r.nextDouble < prob) {
+        as(count) = xs(index)
+        count = count + 1
+      }
+      index = index + 1
+    }
+    as
   }
 
   def getPositions(positions: Any):List[(String, String, scala.Double, scala.Double, scala.Double)] = {
@@ -76,7 +101,7 @@ object Application extends Controller {
       var myPositions = positions.asInstanceOf[java.util.LinkedHashMap[String, Any]].get("values").asInstanceOf[java.util.ArrayList[java.util.HashMap[String, java.util.HashMap[String, Any]]]].toList
       myPositions = myPositions.filter(_.get("company").containsKey("name")).filter(_.containsKey("startDate"))
       val stocks = myPositions.map{ p =>
-      val ticker = if (p.get("company").containsKey("ticker")) p.get("company").get("ticker").toString else "N/A"
+      val ticker = if (p.get("company").containsKey("ticker")) p.get("company").get("ticker").toString else ""
         val companyName = p.get("company").get("name").toString
         val startDate = p.get("startDate").asInstanceOf[java.util.HashMap[String, Double]]
         val startMonth = if (startDate.containsKey("month")) startDate.get("month").toInt else 6
@@ -170,10 +195,14 @@ object Application extends Controller {
   }
 
   def getStockData(ticker:String,sM:Int,sY:Int,eM:Int,eY:Int):(scala.Double, scala.Double, scala.Double) = {
+    if (ticker == "") { 
+      (1.0, 1.0, 0.0) 
+    } else {
       val startPrice = scala.math.round(getStockPrice(ticker, sM, sY) * 10000) / 10000.0
       val endPrice = scala.math.round(getStockPrice(ticker, eM, eY) * 10000) / 10000.0
       val change = scala.math.round((endPrice-startPrice) * 10000/startPrice) / 100.0
       (startPrice, endPrice, change)
+    }
   }
 
   def getStockPrice(stock:String, month:Int, year:Int):scala.Double = {
