@@ -45,6 +45,8 @@ object Application extends Controller {
         import scala.collection.JavaConversions._
         connections.values = sampleFromList(connections.values, 50)
         connections.values = connections.values.sortWith((x,y) => x.firstName < y.firstName)
+        val myProfile = gson.fromJson(profileData,classOf[Profile])
+        connections.values = (myProfile :: connections.values.toList).toArray
         val friendsFutures = connections.values.map{ friend => future{
           val theirStocks = getPositions(friend.positions)
           var theirChange = theirStocks.foldLeft(1.0){(x:scala.Double,y:(String, String, scala.Double, scala.Double, scala.Double))=>
@@ -53,18 +55,13 @@ object Application extends Controller {
           theirChange = scala.math.round((theirChange-1.0)*10000)/100.0
           (friend.firstName, friend.lastName, theirChange, theirStocks)
         }}
-        val friendsScores= friendsFutures.map{future => future()}.filter(_._3!=0).sortWith((x,y) => x._3 > y._3).toList
+        val friendsScores= friendsFutures.map{future => future()}.filter(_._3!=0).sortWith((x,y) => 
+          ((x._1==myProfile.firstName)&&x._2==myProfile.lastName)||
+          ((!(y._1==myProfile.firstName&&y._2==myProfile.lastName))&&x._3 > y._3)).toList
         val sample = friendsScores.last
         println("%s %s %s".format(sample._1, sample._2, sample._3))
         sample._4.foreach{ x=> println("%s %s %s %s".format(x._1, x._3, x._4, x._5))}
-        val myProfile = gson.fromJson(profileData,classOf[Profile])
-        val stocks = getPositions(myProfile.positions)
-        stocks.foreach {stockInfo =>
-          totalChange *= (stockInfo._5.toDouble + 1)
-        }
-        totalChange = scala.math.round((totalChange-1.0) * 10000)/10000.0
-        val allScores = (myProfile.firstName, myProfile.lastName, totalChange, stocks):: friendsScores
-        Ok(views.html.index.render(myProfile, stocks, totalChange, allScores))
+        Ok(views.html.index.render(myProfile, friendsScores))
       }
       case _ =>{
         Logger.info("Redirecting to auth page")
@@ -104,7 +101,7 @@ object Application extends Controller {
       val ticker = if (p.get("company").containsKey("ticker")) p.get("company").get("ticker").toString else ""
         val companyName = p.get("company").get("name").toString
         val startDate = p.get("startDate").asInstanceOf[java.util.HashMap[String, Double]]
-        val startMonth = if (startDate.containsKey("month")) startDate.get("month").toInt else 6
+        val startMonth = if (startDate.containsKey("month")) startDate.get("month").toInt else 0
         val startYear = startDate.get("year").toInt
 
         val endDate = if (p.containsKey("endDate")) p.get("endDate").asInstanceOf[java.util.HashMap[String, Double]] else new java.util.HashMap[String, Double]()
@@ -207,7 +204,11 @@ object Application extends Controller {
 
   def getStockPrice(stock:String, month:Int, year:Int):scala.Double = {
     try {
-      val url = "http://ichart.yahoo.com/table.csv?s=%s&a=%d&b=1&c=%d&d=%d&e=31&f=%d&g=w&ignore=.csv".format(stock, (month-1), year, (month-1), year)
+      val url = if (month > 0) 
+      "http://ichart.yahoo.com/table.csv?s=%s&a=%d&b=1&c=%d&d=%d&e=31&f=%d&g=w&ignore=.csv".format(stock, (month-1), year, (month-1), year) 
+      else
+      "http://ichart.yahoo.com/table.csv?s=%s&a=0&b=1&c=%d&d=11&e=31&f=%d&g=m&ignore=.csv".format(stock, year, year) 
+
       val connection = new URL(url).openConnection
       var lines = Source.fromInputStream(connection.getInputStream).getLines.drop(1).toList
       lines = lines.filter{x:String => (x.split(",").head.split("-").head.toInt == year)}
