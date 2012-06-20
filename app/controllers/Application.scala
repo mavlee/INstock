@@ -76,22 +76,22 @@ object Application extends Controller {
       var myPositions = positions.asInstanceOf[java.util.LinkedHashMap[String, Any]].get("values").asInstanceOf[java.util.ArrayList[java.util.HashMap[String, java.util.HashMap[String, Any]]]].toList
       myPositions = myPositions.filter(_.get("company").containsKey("name")).filter(_.containsKey("startDate"))
       val stocks = myPositions.map{ p =>
-      val ticker = if (p.get("company").containsKey("ticker")) p.get("company").get("ticker").toString else "N/A"
+        val ticker = if (p.get("company").containsKey("ticker")) p.get("company").get("ticker").toString else "N/A"
         val companyName = p.get("company").get("name").toString
         val startDate = p.get("startDate").asInstanceOf[java.util.HashMap[String, Double]]
         val startMonth = if (startDate.containsKey("month")) startDate.get("month").toInt else 6
-          val startYear = startDate.get("year").toInt
+        val startYear = startDate.get("year").toInt
 
-          val endDate = if (p.containsKey("endDate")) p.get("endDate").asInstanceOf[java.util.HashMap[String, Double]] else new java.util.HashMap[String, Double]()
-            val today = new java.util.Date
-            val endMonth = if (endDate.contains("month")) endDate.get("month").toInt else (1+today.getMonth)
-              val endYear = if (endDate.contains("year")) endDate.get("year").toInt else (1900+today.getYear)
-                val stockInfo = getStockData(ticker, startMonth, startYear, endMonth, endYear)
-                (companyName.toString, ticker.toString, stockInfo._1.toDouble, stockInfo._2.toDouble, stockInfo._3.toDouble)
-              }
-              stocks
-            }
-          }
+        val endDate = if (p.containsKey("endDate")) p.get("endDate").asInstanceOf[java.util.HashMap[String, Double]] else new java.util.HashMap[String, Double]()
+        val today = new java.util.Date
+        val endMonth = if (endDate.contains("month")) endDate.get("month").toInt else (1+today.getMonth)
+        val endYear = if (endDate.contains("year")) endDate.get("year").toInt else (1900+today.getYear)
+        val stockInfo = getStockData(ticker, startMonth, startYear, endMonth, endYear)
+        (companyName.toString, ticker.toString, stockInfo._1.toDouble, stockInfo._2.toDouble, stockInfo._3.toDouble)
+      }
+      stocks
+    }
+  }
 
   //the auth action step
   def auth = Action {
@@ -170,10 +170,17 @@ object Application extends Controller {
   }
 
   def getStockData(ticker:String,sM:Int,sY:Int,eM:Int,eY:Int):(scala.Double, scala.Double, scala.Double) = {
-      val startPrice = scala.math.round(getStockPrice(ticker, sM, sY) * 10000) / 10000.0
-      val endPrice = scala.math.round(getStockPrice(ticker, eM, eY) * 10000) / 10000.0
-      val change = scala.math.round((endPrice-startPrice) * 10000/startPrice) / 100.0
-      (startPrice, endPrice, change)
+    var startPrice, endPrice, change = 1.0;
+    if (ticker.equals("N/A")) {
+      startPrice = 10.0
+      endPrice = 10.0
+      change = 0
+    } else {
+      startPrice = scala.math.round(getStockPrice(ticker, sM, sY) * 10000) / 10000.0
+      endPrice = scala.math.round(getStockPrice(ticker, eM, eY) * 10000) / 10000.0
+      change = scala.math.round((endPrice-startPrice) * 10000/startPrice) / 100.0
+    }
+    (startPrice, endPrice, change)
   }
 
   def getStockPrice(stock:String, month:Int, year:Int):scala.Double = {
@@ -182,7 +189,7 @@ object Application extends Controller {
       val connection = new URL(url).openConnection
       var lines = Source.fromInputStream(connection.getInputStream).getLines.drop(1).toList
       lines = lines.filter{x:String => (x.split(",").head.split("-").head.toInt == year)}
-      if (lines.size == 0) 1
+      if (lines.size == 0) 10
       else {
         val res = lines.map(_.split(",").drop(1).dropRight(2).map(_.toDouble).fold(0.0)(_+_)/4).fold(0.0)(_+_)/lines.size
         res
