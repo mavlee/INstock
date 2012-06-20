@@ -105,18 +105,18 @@ object Application extends Controller {
         val companyName = p.get("company").get("name").toString
         val startDate = p.get("startDate").asInstanceOf[java.util.HashMap[String, Double]]
         val startMonth = if (startDate.containsKey("month")) startDate.get("month").toInt else 6
-          val startYear = startDate.get("year").toInt
+        val startYear = startDate.get("year").toInt
 
-          val endDate = if (p.containsKey("endDate")) p.get("endDate").asInstanceOf[java.util.HashMap[String, Double]] else new java.util.HashMap[String, Double]()
-            val today = new java.util.Date
-            val endMonth = if (endDate.contains("month")) endDate.get("month").toInt else (1+today.getMonth)
-              val endYear = if (endDate.contains("year")) endDate.get("year").toInt else (1900+today.getYear)
-                val stockInfo = getStockData(ticker, startMonth, startYear, endMonth, endYear)
-                (companyName.toString, ticker.toString, stockInfo._1.toDouble, stockInfo._2.toDouble, stockInfo._3.toDouble)
-              }
-              stocks
-            }
-          }
+        val endDate = if (p.containsKey("endDate")) p.get("endDate").asInstanceOf[java.util.HashMap[String, Double]] else new java.util.HashMap[String, Double]()
+        val today = new java.util.Date
+        val endMonth = if (endDate.contains("month")) endDate.get("month").toInt else (1+today.getMonth)
+        val endYear = if (endDate.contains("year")) endDate.get("year").toInt else (1900+today.getYear)
+        val stockInfo = getStockData(ticker, startMonth, startYear, endMonth, endYear)
+        (companyName.toString, ticker.toString, stockInfo._1.toDouble, stockInfo._2.toDouble, stockInfo._3.toDouble)
+      }
+      stocks
+    }
+  }
 
   //the auth action step
   def auth = Action {
@@ -211,7 +211,7 @@ object Application extends Controller {
       val connection = new URL(url).openConnection
       var lines = Source.fromInputStream(connection.getInputStream).getLines.drop(1).toList
       lines = lines.filter{x:String => (x.split(",").head.split("-").head.toInt == year)}
-      if (lines.size == 0) 1
+      if (lines.size == 0) 10
       else {
         val res = lines.map(_.split(",").drop(1).dropRight(2).map(_.toDouble).fold(0.0)(_+_)/4).fold(0.0)(_+_)/lines.size
         res
